@@ -3,7 +3,7 @@ node_modules/
 .env
 *.log
 dist/
-workspace/
+/workspace/
 /workspaces/
 /projects/
 
