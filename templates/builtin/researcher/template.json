@@ -1,0 +1,13 @@
+{
+  "id": "researcher",
+  "name": "Market Researcher",
+  "description": "市场调研员，负责行业分析、竞品调研、用户研究",
+  "emoji": "🔬",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "nano-pdf"],
+    "peers": ["pm", "product"]
+  }
+}

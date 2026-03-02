@@ -1,0 +1,13 @@
+{
+  "id": "pacing-designer",
+  "name": "Pacing Designer",
+  "description": "节奏设计师，负责情绪曲线、爽点分布、章末钩子设计",
+  "emoji": "⚡",
+  "category": "builtin",
+  "group": "novel",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["novel-chief", "plot-architect", "novel-writer", "reader-analyst"]
+  }
+}

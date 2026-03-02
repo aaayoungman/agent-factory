@@ -1,0 +1,13 @@
+{
+  "id": "bd",
+  "name": "Business Development",
+  "description": "商务拓展，负责客户开发、合作伙伴关系、商务方案撰写、渠道建设",
+  "emoji": "🤝",
+  "category": "builtin",
+  "group": "sales",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "document-pro"],
+    "peers": ["sales-director", "presales", "product", "marketing", "contract-specialist"]
+  }
+}

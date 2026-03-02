@@ -1,0 +1,13 @@
+{
+  "id": "animation-supervisor",
+  "name": "Animation Supervisor",
+  "description": "作画监督，负责动画质量、运动表现、关键帧审核",
+  "emoji": "⚡",
+  "category": "builtin",
+  "group": "anime",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["anime-director", "storyboard-artist", "art-director", "post-producer"]
+  }
+}

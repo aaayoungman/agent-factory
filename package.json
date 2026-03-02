@@ -1,0 +1,19 @@
+{
+  "name": "agent-factory",
+  "version": "0.2.0",
+  "description": "AI Employee Factory — Self-contained multi-agent team with built-in OpenClaw engine",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/start.mjs",
+    "gateway": "node scripts/start.mjs --gateway-only",
+    "ui": "cd ui && npm run dev"
+  },
+  "dependencies": {
+    "clawhub": "^0.7.0",
+    "openclaw": "^2026.2.23"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "license": "GPL-3.0-only"
+}

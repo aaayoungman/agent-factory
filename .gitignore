@@ -1,0 +1,28 @@
+node_modules/
+.openclaw-state/
+.env
+*.log
+dist/
+workspace/
+/workspaces/
+/projects/
+
+# Runtime config (generated from *.default.json on first startup)
+config/models.json
+config/openclaw.json
+config/autopilot-state.json
+
+# Claude Code local memory (session-specific)
+.claude/
+
+# Agent instances (live, created at runtime via UI)
+/agents/
+!/agents/.gitkeep
+
+# Custom templates (user-created, not tracked)
+templates/custom/
+!templates/custom/.gitkeep
+
+# Internal docs (not for open-source release)
+docs/商业化分析报告.md
+docs/优化方案.md

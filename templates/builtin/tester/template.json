@@ -1,0 +1,13 @@
+{
+  "id": "tester",
+  "name": "QA Engineer",
+  "description": "测试工程师，负责测试用例、自动化测试、质量保证",
+  "emoji": "🧪",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["tmux", "peekaboo", "github"],
+    "peers": ["pm", "frontend", "backend"]
+  }
+}

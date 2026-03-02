@@ -1,0 +1,13 @@
+{
+  "id": "character-designer",
+  "name": "Character Designer",
+  "description": "人设师，负责角色档案、关系网、成长弧线、语言风格设计",
+  "emoji": "👤",
+  "category": "builtin",
+  "group": "novel",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["novel-chief", "worldbuilder", "plot-architect", "novel-writer", "continuity-mgr", "anime-char-designer"]
+  }
+}

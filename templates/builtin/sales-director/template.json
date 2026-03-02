@@ -1,0 +1,13 @@
+{
+  "id": "sales-director",
+  "name": "Sales Director",
+  "description": "销售总监，负责销售策略制定、KPI 管理、大客户关系、营收目标",
+  "emoji": "🎯",
+  "category": "builtin",
+  "group": "sales",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "document-pro"],
+    "peers": ["ceo", "bd", "presales", "cfo", "product", "marketing", "csm"]
+  }
+}

@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { join, resolve } from 'path'
+
+export const dynamic = 'force-dynamic'
+
+const PROJECT_ROOT = resolve(process.cwd(), '..')
+const PROJECTS_DIR = join(PROJECT_ROOT, 'projects')
+const SESSIONS_DIR = join(PROJECT_ROOT, '.openclaw-state', 'agents')
+
+/** Read real token usage from gateway session files, grouped by agent */
+function getSessionTokensByAgent(): Record<string, number> {
+  const byAgent: Record<string, number> = {}
+  try {
+    if (!existsSync(SESSIONS_DIR)) return byAgent
+    const agentDirs = readdirSync(SESSIONS_DIR, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+    for (const dir of agentDirs) {
+      const sessFile = join(SESSIONS_DIR, dir.name, 'sessions', 'sessions.json')
+      if (!existsSync(sessFile)) continue
+      try {
+        const sessions = JSON.parse(readFileSync(sessFile, 'utf-8'))
+        let total = 0
+        for (const key of Object.keys(sessions)) {
+          total += sessions[key]?.totalTokens || 0
+        }
+        byAgent[dir.name] = total
+      } catch { /* skip */ }
+    }
+  } catch { /* ignore */ }
+  return byAgent
+}
+
+export async function GET() {
+  try {
+    if (!existsSync(PROJECTS_DIR)) {
+      return NextResponse.json({ projects: [], source: 'filesystem' })
+    }
+    const dirs = readdirSync(PROJECTS_DIR, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+
+    // Load live token data once
+    const tokensByAgent = getSessionTokensByAgent()
+
+    const projects = dirs.map(d => {
+      const metaPath = join(PROJECTS_DIR, d.name, '.project-meta.json')
+      if (existsSync(metaPath)) {
+        try {
+          const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+          // Compute live tokensUsed from assigned agents' session data
+          const assigned: string[] = meta.assignedAgents || []
+          if (assigned.length > 0) {
+            meta.tokensUsed = assigned.reduce((sum: number, aid: string) => sum + (tokensByAgent[aid] || 0), 0)
+          }
+          return { id: d.name, ...meta }
+        } catch { /* fall through */ }
+      }
+      return {
+        id: d.name,
+        name: d.name,
+        description: '',
+        status: 'unknown',
+      }
+    })
+
+    return NextResponse.json({ projects, source: 'filesystem' })
+  } catch (e) {
+    return NextResponse.json({ error: String(e), projects: [], source: 'error' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { name, description = '' } = await req.json() as { name: string; description?: string }
+    if (!name?.trim()) {
+      return NextResponse.json({ error: 'name is required' }, { status: 400 })
+    }
+
+    // Slugify name → id
+    const id = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    if (!id) return NextResponse.json({ error: 'invalid project name' }, { status: 400 })
+
+    const projectDir = join(PROJECTS_DIR, id)
+    if (existsSync(projectDir)) {
+      return NextResponse.json({ error: `Project "${id}" already exists` }, { status: 409 })
+    }
+
+    // Create directory structure
+    for (const sub of ['docs', 'design', 'src', 'tests']) {
+      mkdirSync(join(projectDir, sub), { recursive: true })
+    }
+
+    const now = new Date().toISOString()
+    const meta = {
+      name: name.trim(),
+      description,
+      status: 'planning',
+      currentPhase: 1,
+      totalPhases: 5,
+      createdAt: now,
+      tokensUsed: 0,
+      tasks: [],
+      assignedAgents: [],
+    }
+    writeFileSync(join(projectDir, '.project-meta.json'), JSON.stringify(meta, null, 2) + '\n')
+
+    // Write BRIEF.md for agents
+    const brief = `# Project Brief: ${meta.name}
+
+**Project ID:** ${id}
+**Created:** ${now}
+**Description:** ${description || '(none)'}
+
+## Shared Workspace
+
+This project's shared workspace is at:
+\`${projectDir}\`
+
+## Directory Conventions
+
+- \`docs/\` — All written documents: PRD, API spec, DB schema, research, meeting notes
+- \`design/\` — UI designs, wireframes, design tokens, image assets
+- \`src/\` — Source code (create \`frontend/\` and \`backend/\` subdirectories as needed)
+- \`tests/\` — Test files, test reports, QA notes
+
+## Agent Workflow
+
+1. **PM** assigns work → creates task notes in \`docs/\`
+2. **Researcher** writes findings → \`docs/research-{topic}.md\`
+3. **Product** writes PRD → \`docs/prd.md\`
+4. **Designer** outputs → \`design/\`
+5. **Frontend** writes code → \`src/frontend/\`
+6. **Backend** writes code → \`src/backend/\`
+7. **Tester** writes tests → \`tests/\`
+
+## Communication
+
+- Leave notes for other agents in \`docs/notes-from-{your-role}.md\`
+- Update \`docs/status.md\` when you complete a phase
+`
+    writeFileSync(join(projectDir, 'BRIEF.md'), brief)
+
+    return NextResponse.json({ ok: true, project: { id, ...meta } })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}

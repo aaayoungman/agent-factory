@@ -1,0 +1,13 @@
+{
+  "id": "writer",
+  "name": "Technical Writer",
+  "description": "技术文档工程师，负责 API 文档、用户手册、Changelog",
+  "emoji": "✍️",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "nano-pdf", "github"],
+    "peers": ["pm", "product", "frontend", "backend", "marketing", "content-creator", "pr-specialist", "content-ops"]
+  }
+}

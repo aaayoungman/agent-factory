@@ -1,0 +1,13 @@
+{
+  "id": "accountant",
+  "name": "Accountant",
+  "description": "会计，负责记账核算、财务报表编制、税务处理、资金流水管理",
+  "emoji": "📒",
+  "category": "builtin",
+  "group": "finance",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "document-pro"],
+    "peers": ["cfo", "cost-analyst"]
+  }
+}

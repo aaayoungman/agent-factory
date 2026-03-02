@@ -1,0 +1,13 @@
+{
+  "id": "post-producer",
+  "name": "Post Producer",
+  "description": "后期制作，负责合成、特效、剪辑、输出成片",
+  "emoji": "🕸️",
+  "category": "builtin",
+  "group": "anime",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["anime-director", "animation-supervisor", "sound-director", "art-director"]
+  }
+}

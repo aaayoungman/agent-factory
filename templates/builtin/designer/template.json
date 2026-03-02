@@ -1,0 +1,13 @@
+{
+  "id": "designer",
+  "name": "UI/UX Designer",
+  "description": "UI/UX 设计师，负责界面设计、交互设计、设计规范",
+  "emoji": "🎨",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["peekaboo"],
+    "peers": ["product", "frontend", "marketing", "brand-director", "content-creator"]
+  }
+}

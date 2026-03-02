@@ -1,0 +1,13 @@
+{
+  "id": "ai-researcher",
+  "name": "AI Researcher",
+  "description": "AI 研究员，负责论文阅读与综述、算法研究与实现、模型评测、原型验证",
+  "emoji": "🔬",
+  "category": "builtin",
+  "group": "research",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "nano-pdf", "github"],
+    "peers": ["chief-scientist", "innovation-analyst", "backend"]
+  }
+}

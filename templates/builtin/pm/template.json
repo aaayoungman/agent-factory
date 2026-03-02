@@ -1,0 +1,13 @@
+{
+  "id": "pm",
+  "name": "Project Manager",
+  "description": "项目经理，负责需求分解、任务协调、进度跟踪",
+  "emoji": "📋",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["tmux", "github", "session-logs"],
+    "peers": ["ceo", "researcher", "product", "designer", "frontend", "backend", "tester", "writer", "presales", "csm"]
+  }
+}

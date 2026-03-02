@@ -1,0 +1,13 @@
+{
+  "id": "legal-director",
+  "name": "Legal Director",
+  "description": "法务总监，负责法律风险管控、合规策略制定、诉讼管理、知识产权保护",
+  "emoji": "⚖️",
+  "category": "builtin",
+  "group": "legal",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "document-pro"],
+    "peers": ["ceo", "cfo", "contract-specialist", "compliance-officer"]
+  }
+}

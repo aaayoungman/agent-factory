@@ -1,0 +1,14 @@
+{
+  "id": "main",
+  "name": "Main Agent",
+  "description": "入口 Agent，系统默认路由目标",
+  "emoji": "🏠",
+  "category": "builtin",
+  "hidden": true,
+  "group": "dev",
+  "defaults": {
+    "model": "minimax/MiniMax-M2.5-highspeed",
+    "skills": [],
+    "peers": []
+  }
+}

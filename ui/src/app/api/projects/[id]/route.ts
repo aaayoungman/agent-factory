@@ -1,0 +1,31 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { existsSync, rmSync } from 'fs'
+import { join, resolve } from 'path'
+
+export const dynamic = 'force-dynamic'
+
+const PROJECT_ROOT = resolve(process.cwd(), '..')
+const PROJECTS_DIR = join(PROJECT_ROOT, 'projects')
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params
+    // Security: no path traversal
+    if (!id || id.includes('..') || id.includes('/') || id.includes('\\')) {
+      return NextResponse.json({ error: 'invalid project id' }, { status: 400 })
+    }
+
+    const projectDir = join(PROJECTS_DIR, id)
+    if (!existsSync(projectDir)) {
+      return NextResponse.json({ error: `Project not found: ${id}` }, { status: 404 })
+    }
+
+    rmSync(projectDir, { recursive: true })
+    return NextResponse.json({ ok: true, id })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}

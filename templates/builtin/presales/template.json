@@ -1,0 +1,13 @@
+{
+  "id": "presales",
+  "name": "Pre-sales Consultant",
+  "description": "售前顾问，负责产品演示、技术方案设计、投标文档撰写、客户需求分析",
+  "emoji": "🎤",
+  "category": "builtin",
+  "group": "sales",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "document-pro"],
+    "peers": ["sales-director", "bd", "pm", "frontend", "backend", "product"]
+  }
+}

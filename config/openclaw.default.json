@@ -1,0 +1,47 @@
+{
+  "meta": {},
+  "wizard": {},
+  "models": {
+    "mode": "merge",
+    "providers": {}
+  },
+  "agents": {
+    "defaults": {
+      "contextTokens": 200000,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": []
+  },
+  "tools": {
+    "agentToAgent": {
+      "enabled": true,
+      "allow": [
+        "*"
+      ]
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "channels": {},
+  "gateway": {
+    "port": 19100,
+    "mode": "local",
+    "controlUi": {
+      "allowInsecureAuth": true,
+      "dangerouslyDisableDeviceAuth": true
+    },
+    "auth": {
+      "mode": "token",
+      "token": "agent-factory-internal-token-2026"
+    }
+  },
+  "plugins": {
+    "entries": {}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "continuity-mgr",
+  "name": "Continuity Manager",
+  "description": "连续性管理员，负责伏笔追踪、时间线一致性、矛盾检测",
+  "emoji": "🔗",
+  "category": "builtin",
+  "group": "novel",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["novel-chief", "worldbuilder", "character-designer", "plot-architect", "novel-writer"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "contract-specialist",
+  "name": "Contract Specialist",
+  "description": "合同专员，负责合同起草与审核、条款谈判建议、合同模板库管理、风险条款识别",
+  "emoji": "📜",
+  "category": "builtin",
+  "group": "legal",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "document-pro"],
+    "peers": ["legal-director", "compliance-officer", "sales-director", "bd"]
+  }
+}

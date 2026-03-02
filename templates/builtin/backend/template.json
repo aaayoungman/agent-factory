@@ -1,0 +1,13 @@
+{
+  "id": "backend",
+  "name": "Backend Engineer",
+  "description": "后端工程师，负责 API 开发、数据库设计、系统架构",
+  "emoji": "⚙️",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["1password", "github", "tmux"],
+    "peers": ["pm", "frontend", "tester", "presales", "support-agent", "ai-researcher"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "pr-specialist",
+  "name": "PR Specialist",
+  "description": "公关专员，负责 PR 稿件撰写、媒体关系维护、危机公关预案、舆情监控分析",
+  "emoji": "📰",
+  "category": "builtin",
+  "group": "brand",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs", "wechat-mp-cn"],
+    "peers": ["brand-director", "content-creator", "marketing", "content-ops", "writer"]
+  }
+}

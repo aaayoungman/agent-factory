@@ -1,0 +1,13 @@
+{
+  "id": "product",
+  "name": "Product Manager",
+  "description": "产品经理，负责 PRD 编写、功能设计、优先级排序",
+  "emoji": "📦",
+  "category": "builtin",
+  "group": "dev",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "nano-pdf"],
+    "peers": ["pm", "researcher", "designer", "marketing", "analyst", "sales-director", "csm", "chief-scientist"]
+  }
+}

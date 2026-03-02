@@ -1,0 +1,13 @@
+{
+  "id": "novel-writer",
+  "name": "Novel Writer",
+  "description": "网文写手，负责按纲撰写正文章节",
+  "emoji": "✒️",
+  "category": "builtin",
+  "group": "novel",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["novel-chief", "plot-architect", "pacing-designer", "character-designer", "style-editor", "continuity-mgr", "script-adapter"]
+  }
+}
