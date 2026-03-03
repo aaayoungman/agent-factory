@@ -7,7 +7,8 @@
     "logs": "日志与监控",
     "settings": "设置",
     "messages": "消息",
-    "tasks": "任务"
+    "tasks": "任务",
+    "autopilot": "自动驾驶"
   },
   "common": {
     "systemActive": "系统运行中",
@@ -368,6 +369,18 @@
     "template": "模板",
     "systemPrompt": "系统提示词 (AGENTS.md)",
     "systemPromptPlaceholder": "自定义系统提示词，留空使用模板默认..."
+  },
+  "autopilot": {
+    "title": "自动驾驶",
+    "subtitle": "自动循环运行与部门管理",
+    "tabOverview": "总览",
+    "tabDepartments": "部门",
+    "tabBudget": "预算",
+    "controls": "控制",
+    "stats": "统计",
+    "lastCycle": "最近一次循环",
+    "history": "历史记录",
+    "noDepartments": "暂无部门循环配置"
   },
   "phases": {
     "research": "调研",

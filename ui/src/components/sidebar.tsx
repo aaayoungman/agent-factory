@@ -7,12 +7,13 @@ import { LanguageSwitcher } from './language-switcher'
 import { useMobile } from '@/hooks/use-mobile'
 import {
   LayoutDashboard, Users, FolderKanban, Wrench,
-  Settings, ScrollText, Activity, Zap, Menu, X, MessageSquare, CheckSquare
+  Settings, ScrollText, Activity, Zap, Menu, X, MessageSquare, CheckSquare, Rocket
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const nav = [
   { href: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { href: '/autopilot', labelKey: 'nav.autopilot', icon: Rocket },
   { href: '/agents', labelKey: 'nav.agents', icon: Users },
   { href: '/projects', labelKey: 'nav.projects', icon: FolderKanban },
   { href: '/tasks', labelKey: 'nav.tasks', icon: CheckSquare },

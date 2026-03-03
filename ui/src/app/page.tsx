@@ -7,13 +7,11 @@ import { StatCard } from '@/components/stat-card'
 import { AgentCard } from '@/components/agent-card'
 import { TokenChart } from '@/components/token-chart'
 import { AgentTokenChart } from '@/components/agent-token-chart'
-import { LogList } from '@/components/log-list'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PhaseProgress } from '@/components/phase-progress'
 import { Users, FolderKanban, Zap, Activity, AlertTriangle, X, RefreshCw } from 'lucide-react'
 import { formatNumber } from '@/lib/utils'
-import { AutopilotCard } from '@/components/autopilot-card'
 
 export default function DashboardPage() {
   const { agents, projects, logs, mode, dataSource, totalTokens: realTotalTokens, totalCost, connected, fetchAgents, fetchLogs, fetchUsage } = useAppStore()
@@ -114,20 +112,17 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Autopilot Control */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <AutopilotCard />
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-semibold">{t('dashboard.agentStatus')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {agents.slice(0, 6).map(a => <AgentCard key={a.id} agent={a} />)}
-          </div>
+      {/* Agent Status */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">{t('dashboard.agentStatus')}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {agents.slice(0, 6).map(a => <AgentCard key={a.id} agent={a} />)}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">{t('dashboard.activeProjectsList')}</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">{t('dashboard.activeProjectsList')}</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {projects.filter(p => p.status !== 'completed').map(p => (
             <Card key={p.id}>
               <CardContent className="p-5 space-y-3">
@@ -143,16 +138,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           ))}
-
-        </div>
-
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">{t('dashboard.recentLogs')}</h2>
-          <Card>
-            <CardContent className="p-4">
-              <LogList logs={logs} maxItems={8} />
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

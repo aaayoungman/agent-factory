@@ -7,7 +7,8 @@
     "logs": "Logs & Monitor",
     "settings": "Settings",
     "messages": "Messages",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "autopilot": "Autopilot"
   },
   "common": {
     "systemActive": "System Active",
@@ -368,6 +369,18 @@
     "template": "Template",
     "systemPrompt": "System Prompt (AGENTS.md)",
     "systemPromptPlaceholder": "Custom system prompt, leave empty to use template default..."
+  },
+  "autopilot": {
+    "title": "Autopilot",
+    "subtitle": "Automated cycle loops and department management",
+    "tabOverview": "Overview",
+    "tabDepartments": "Departments",
+    "tabBudget": "Budget",
+    "controls": "Controls",
+    "stats": "Statistics",
+    "lastCycle": "Last Cycle",
+    "history": "History",
+    "noDepartments": "No department loops configured"
   },
   "phases": {
     "research": "Research",

@@ -51,6 +51,27 @@ export interface Agent {
   department?: string
 }
 
+export interface TaskQuality {
+  selfCheck?: {
+    passed: boolean
+    score: number
+    checklist: string[]
+    at: string
+  }
+  peerReview?: {
+    reviewer: string
+    passed: boolean
+    score: number
+    comments: string
+    at: string
+  }
+  headApproval?: {
+    approver: string
+    passed: boolean
+    at: string
+  }
+}
+
 export interface Task {
   id: string
   name: string
@@ -66,9 +87,54 @@ export interface Task {
   dependencies: string[]
   output?: string
   tags?: string[]
+  quality?: TaskQuality
   createdAt: string
   updatedAt: string
   completedAt?: string
+}
+
+export interface DepartmentLoopState {
+  status: 'running' | 'stopped' | 'cycling' | 'idle' | 'error'
+  pid: number | null
+  cycleCount: number
+  lastCycleAt: string | null
+  lastCycleResult: string | null
+  history: Array<{
+    cycle: number
+    startedAt: string
+    completedAt: string
+    elapsedSec: number
+    result: string
+  }>
+  tokensUsedToday: number
+  budgetResetAt: string | null
+}
+
+export interface DepartmentConfig {
+  id: string
+  name: string
+  head: string
+  interval: number
+  enabled: boolean
+  agents: string[]
+  budget?: {
+    dailyTokenLimit: number
+    alertThreshold: number
+  }
+  kpis?: Record<string, { target: number; unit: string }>
+}
+
+export interface BudgetSummary {
+  company: {
+    dailyLimit: number
+    used: number
+    ratio: number
+  }
+  departments: Record<string, {
+    limit: number
+    used: number
+    ratio: number
+  }>
 }
 
 export interface Project {

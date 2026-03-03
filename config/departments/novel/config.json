@@ -1,0 +1,28 @@
+{
+  "id": "novel",
+  "name": "网文创作部",
+  "head": "novel-chief",
+  "interval": 600,
+  "enabled": true,
+  "agents": [
+    "novel-chief",
+    "novel-writer",
+    "plot-architect",
+    "character-designer",
+    "worldbuilder",
+    "style-editor",
+    "pacing-designer",
+    "continuity-mgr",
+    "reader-analyst",
+    "novel-researcher"
+  ],
+  "budget": {
+    "dailyTokenLimit": 800000,
+    "alertThreshold": 0.8
+  },
+  "kpis": {
+    "chapters_per_day": { "target": 5, "unit": "chapters" },
+    "quality_score": { "target": 75, "unit": "score/100" },
+    "completion_rate": { "target": 80, "unit": "%" }
+  }
+}
