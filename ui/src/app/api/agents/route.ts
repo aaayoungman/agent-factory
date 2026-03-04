@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readTemplate, getTemplateDir } from '@/lib/template-meta'
 import { fetchAgentsData } from '@/lib/data-fetchers'
 import { injectBaseRulesForAgent } from '@/lib/base-rules'
-import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync, renameSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync, renameSync, symlinkSync, lstatSync } from 'fs'
 import { join, resolve } from 'path'
 import { restartGateway, getStatus } from '@/lib/gateway-manager'
 
@@ -134,6 +134,64 @@ function removeFromOpenclawConfig(agentId: string) {
   if (!config.agents?.list) return
   config.agents.list = (config.agents.list as Array<{ id: string }>).filter(a => a.id !== agentId)
   writeOpenclawConfig(config)
+}
+
+function ensureProjectForDepartment(department: string, agentId: string) {
+  const projectDir = join(PROJECT_ROOT, 'projects', department)
+
+  // Create project directory structure if it doesn't exist
+  if (!existsSync(projectDir)) {
+    for (const sub of ['docs', 'design', 'src', 'tests']) {
+      mkdirSync(join(projectDir, sub), { recursive: true })
+    }
+    const now = new Date().toISOString()
+    const meta = {
+      name: department,
+      description: `Auto-created project for ${department} department`,
+      status: 'planning',
+      currentPhase: 1,
+      totalPhases: 5,
+      createdAt: now,
+      tokensUsed: 0,
+      tasks: [],
+      assignedAgents: [agentId],
+    }
+    writeFileSync(join(projectDir, '.project-meta.json'), JSON.stringify(meta, null, 2) + '\n')
+
+    const brief = `# Project Brief: ${department}
+
+**Project ID:** ${department}
+**Created:** ${now}
+**Description:** Auto-created project for ${department} department
+
+## Shared Workspace
+
+This project's shared workspace is at:
+\`${projectDir}\`
+
+## Directory Conventions
+
+- \`docs/\` — All written documents: PRD, research, meeting notes
+- \`design/\` — Designs, wireframes, design tokens
+- \`src/\` — Source code and outputs
+- \`tests/\` — Test files, test reports, QA notes
+`
+    writeFileSync(join(projectDir, 'BRIEF.md'), brief)
+  } else {
+    // Project exists — ensure agent is in assignedAgents
+    const metaPath = join(projectDir, '.project-meta.json')
+    if (existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
+        const assigned: string[] = meta.assignedAgents || []
+        if (!assigned.includes(agentId)) {
+          assigned.push(agentId)
+          meta.assignedAgents = assigned
+          writeFileSync(metaPath, JSON.stringify(meta, null, 2) + '\n')
+        }
+      } catch { /* skip */ }
+    }
+  }
 }
 
 async function tryRestartGateway(): Promise<boolean> {
@@ -384,14 +442,37 @@ export async function POST(req: NextRequest) {
     // 5. Inject global base rules into AGENTS.md and SOUL.md
     injectBaseRulesForAgent(agentDir)
 
-    // 6. Create workspaces/{id}/ directory
+    // 6. Create workspaces/{id}/ directory with symlinks to agents/{id}/
     const workspaceDir = join(PROJECT_ROOT, 'workspaces', id)
     mkdirSync(workspaceDir, { recursive: true })
 
-    // 7. Add to openclaw.json (workspace = agents/{id})
-    addToOpenclawConfig(id, agentDir, finalModel)
+    // Create symlinks: workspace files → agent definition files
+    const symlinkFiles = ['AGENTS.md', 'SOUL.md', 'IDENTITY.md', 'TOOLS.md', 'MEMORY.md', 'USER.md', 'HEARTBEAT.md', 'agent.json']
+    const symlinkDirs = ['memory', 'skills']
+    for (const f of symlinkFiles) {
+      const target = join(agentDir, f)
+      const link = join(workspaceDir, f)
+      if (existsSync(target) && !existsSync(link)) {
+        symlinkSync(target, link)
+      }
+    }
+    for (const d of symlinkDirs) {
+      const target = join(agentDir, d)
+      const link = join(workspaceDir, d)
+      if (existsSync(target) && !existsSync(link)) {
+        symlinkSync(target, link)
+      }
+    }
 
-    // 8. Restart gateway
+    // 7. Add to openclaw.json (workspace = workspaces/{id})
+    addToOpenclawConfig(id, workspaceDir, finalModel)
+
+    // 8. Auto-create project for department
+    if (finalDepartment) {
+      ensureProjectForDepartment(finalDepartment, id)
+    }
+
+    // 9. Restart gateway
     const restarted = await tryRestartGateway()
 
     return NextResponse.json({ ok: true, id, deployed: true, restarted, hasIdentityFiles })
@@ -458,8 +539,14 @@ export async function PUT(req: NextRequest) {
 
     // Update openclaw.json and restart if model changed
     if (model !== undefined) {
-      addToOpenclawConfig(id, agentDir, (agentJson.model as string) || '')
+      addToOpenclawConfig(id, join(PROJECT_ROOT, 'workspaces', id), (agentJson.model as string) || '')
       await tryRestartGateway()
+    }
+
+    // Auto-create project for department
+    const currentDept = (agentJson.department as string) || undefined
+    if (currentDept) {
+      ensureProjectForDepartment(currentDept, id)
     }
 
     return NextResponse.json({ ok: true })

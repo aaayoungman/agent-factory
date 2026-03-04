@@ -29,6 +29,7 @@ INTERACTIVE=true
 SKIP_UI=false
 INSTALL_DIR=""
 VERSION=""
+UPGRADE_MODE=false
 
 # ─── Colors ──────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,10 @@ parse_args() {
         SKIP_UI=true
         shift
         ;;
+      --upgrade)
+        UPGRADE_MODE=true
+        shift
+        ;;
       --dir)
         [[ -z "${2:-}" ]] && fatal "--dir requires a value"
         INSTALL_DIR="$2"
@@ -125,11 +130,15 @@ Options:
   --skip-ui            Skip UI dependency installation
   --dir <path>         Installation directory (default: ./agent-factory)
   --version <ver>      Install specific version (e.g. v0.2.0)
+  --upgrade            Upgrade existing installation to latest version
   -h, --help           Show this help message
 
 Examples:
   # Interactive install (recommended)
   bash install.sh
+
+  # Upgrade existing installation
+  bash install.sh --upgrade
 
   # Install specific version to custom directory
   bash install.sh --version v0.2.0 --dir ~/my-factory
@@ -650,6 +659,76 @@ verify_installation() {
   fi
 }
 
+# ─── Register CLI ────────────────────────────────────────────────────────────
+
+register_cli() {
+  step "Registering agent-factory CLI"
+
+  cd "$INSTALL_DIR"
+
+  local cli_src="$INSTALL_DIR/bin/agent-factory.mjs"
+  if [[ ! -f "$cli_src" ]]; then
+    warn "CLI entry point not found at $cli_src, skipping registration."
+    return 0
+  fi
+
+  chmod +x "$cli_src"
+
+  # Write root marker so the CLI can locate the project
+  echo "$INSTALL_DIR" > "$HOME/.agent-factory-root"
+  success "Wrote project path to ~/.agent-factory-root"
+
+  # Try /usr/local/bin first, fall back to ~/.local/bin
+  local link_dir="/usr/local/bin"
+  local link_path="${link_dir}/agent-factory"
+
+  if [[ -w "$link_dir" ]] || [[ -w "$(dirname "$link_dir")" ]]; then
+    ln -sf "$cli_src" "$link_path"
+    success "Linked: ${link_path} → ${cli_src}"
+  else
+    # Try with sudo
+    if command_exists sudo && sudo -n true 2>/dev/null; then
+      sudo ln -sf "$cli_src" "$link_path"
+      success "Linked (sudo): ${link_path} → ${cli_src}"
+    else
+      # Fallback to ~/.local/bin
+      link_dir="$HOME/.local/bin"
+      link_path="${link_dir}/agent-factory"
+      mkdir -p "$link_dir"
+      ln -sf "$cli_src" "$link_path"
+      success "Linked: ${link_path} → ${cli_src}"
+
+      # Check if ~/.local/bin is in PATH
+      if ! echo "$PATH" | tr ':' '\n' | grep -qx "$link_dir"; then
+        warn "${link_dir} is not in your PATH."
+
+        # Detect shell config file
+        local shell_rc=""
+        if [[ -n "${ZSH_VERSION:-}" ]] || [[ "$SHELL" == *zsh ]]; then
+          shell_rc="$HOME/.zshrc"
+        elif [[ -n "${BASH_VERSION:-}" ]] || [[ "$SHELL" == *bash ]]; then
+          shell_rc="$HOME/.bashrc"
+        fi
+
+        if [[ -n "$shell_rc" ]]; then
+          local path_line="export PATH=\"\$HOME/.local/bin:\$PATH\""
+          if ! grep -qF '.local/bin' "$shell_rc" 2>/dev/null; then
+            echo "" >> "$shell_rc"
+            echo "# Added by Agent Factory installer" >> "$shell_rc"
+            echo "$path_line" >> "$shell_rc"
+            success "Added ${link_dir} to PATH in ${shell_rc}"
+            info "Run ${BOLD}source ${shell_rc}${RESET} or open a new terminal to use the CLI."
+          else
+            info "${link_dir} already referenced in ${shell_rc}."
+          fi
+        else
+          info "Add ${BOLD}export PATH=\"\$HOME/.local/bin:\$PATH\"${RESET} to your shell profile."
+        fi
+      fi
+    fi
+  fi
+}
+
 # ─── Completion ──────────────────────────────────────────────────────────────
 
 show_completion() {
@@ -661,6 +740,12 @@ show_completion() {
   echo -e "  ${BOLD}Services:${RESET}"
   echo -e "    Dashboard:  ${CYAN}http://localhost:3100${RESET}"
   echo -e "    Gateway:    ${CYAN}http://localhost:19100${RESET}"
+  echo ""
+  echo -e "  ${BOLD}CLI:${RESET}"
+  echo -e "    ${CYAN}agent-factory status${RESET}   — check service status"
+  echo -e "    ${CYAN}agent-factory stop${RESET}     — stop services"
+  echo -e "    ${CYAN}agent-factory update${RESET}   — update to latest version"
+  echo -e "    ${CYAN}agent-factory doctor${RESET}   — check environment"
   echo ""
   echo -e "  ${YELLOW}Next:${RESET} Configure your API keys at ${CYAN}http://localhost:3100/settings${RESET}"
   echo ""
@@ -694,6 +779,120 @@ start_services() {
   fi
 }
 
+# ─── Upgrade ──────────────────────────────────────────────────────────────────
+
+find_existing_install() {
+  # 1. --dir flag
+  if [[ -n "$INSTALL_DIR" ]]; then
+    if [[ -f "$INSTALL_DIR/package.json" ]] && grep -q '"name": "agent-factory"' "$INSTALL_DIR/package.json" 2>/dev/null; then
+      return 0
+    fi
+    fatal "No agent-factory installation found at: $INSTALL_DIR"
+  fi
+
+  # 2. Current directory
+  if [[ -f "package.json" ]] && grep -q '"name": "agent-factory"' package.json 2>/dev/null; then
+    INSTALL_DIR="$(pwd)"
+    return 0
+  fi
+
+  # 3. ~/.agent-factory-root
+  local root_file="$HOME/.agent-factory-root"
+  if [[ -f "$root_file" ]]; then
+    local dir
+    dir="$(cat "$root_file")"
+    if [[ -n "$dir" && -f "$dir/package.json" ]] && grep -q '"name": "agent-factory"' "$dir/package.json" 2>/dev/null; then
+      INSTALL_DIR="$dir"
+      return 0
+    fi
+  fi
+
+  # 4. Common locations
+  for candidate in "$HOME/agent-factory" "/opt/agent-factory" "./agent-factory"; do
+    if [[ -f "$candidate/package.json" ]] && grep -q '"name": "agent-factory"' "$candidate/package.json" 2>/dev/null; then
+      INSTALL_DIR="$candidate"
+      return 0
+    fi
+  done
+
+  fatal "Cannot find existing agent-factory installation.\nUse --dir <path> to specify the location, or run a fresh install without --upgrade."
+}
+
+run_upgrade() {
+  step "Upgrading Agent Factory"
+
+  find_existing_install
+  info "Found installation at: ${BOLD}$INSTALL_DIR${RESET}"
+
+  cd "$INSTALL_DIR"
+  local old_version
+  old_version="$(grep '"version"' package.json | head -1 | sed 's/.*"\([0-9][^"]*\)".*/\1/')"
+  info "Current version: ${BOLD}v${old_version}${RESET}"
+
+  # Resolve target version
+  if ! resolve_version; then
+    fatal "Cannot determine latest version. Check your internet connection."
+  fi
+
+  local target_version="${VERSION#v}"
+  if [[ "$old_version" == "$target_version" ]]; then
+    success "Already up to date (v${old_version})."
+    # Still register CLI in case that's what the user wants
+    register_cli
+    echo ""
+    success "CLI registered. Run ${BOLD}agent-factory${RESET} from anywhere."
+    return 0
+  fi
+
+  info "Upgrading v${old_version} → ${BOLD}${VERSION}${RESET}"
+
+  # Stop running services
+  step "Stopping services"
+  lsof -ti:3100 | xargs kill 2>/dev/null && success "Stopped Dashboard" || true
+  local gw_port="${OPENCLAW_GATEWAY_PORT:-19100}"
+  lsof -ti:"$gw_port" | xargs kill 2>/dev/null && success "Stopped Gateway" || true
+
+  # Download and overlay
+  step "Downloading ${VERSION}"
+  download_release || fatal "Failed to download release ${VERSION}"
+
+  # Install dependencies
+  step "Installing dependencies"
+  npm install
+  success "Root dependencies installed."
+  if [[ -d "ui" && -f "ui/package.json" ]]; then
+    (cd ui && npm install)
+    success "UI dependencies installed."
+  fi
+
+  # Run migration scripts
+  local scripts_dir="$INSTALL_DIR/scripts"
+  local migration_scripts
+  migration_scripts="$(find "$scripts_dir" -name 'migrate-*.mjs' 2>/dev/null | sort)"
+  if [[ -n "$migration_scripts" ]]; then
+    step "Running migrations"
+    while IFS= read -r script; do
+      info "Running $(basename "$script")..."
+      node "$script" || warn "Migration $(basename "$script") had warnings"
+    done <<< "$migration_scripts"
+  fi
+
+  # Register CLI
+  register_cli
+
+  local new_version
+  new_version="$(grep '"version"' package.json | head -1 | sed 's/.*"\([0-9][^"]*\)".*/\1/')"
+
+  echo ""
+  echo -e "${BOLD}${GREEN}━━━ Upgrade Complete! ━━━${RESET}"
+  echo ""
+  echo -e "  ${BOLD}v${old_version}${RESET} → ${BOLD}${GREEN}v${new_version}${RESET}"
+  echo ""
+  echo -e "  Run ${CYAN}agent-factory start${RESET} to restart services."
+  echo -e "  Run ${CYAN}agent-factory doctor${RESET} to verify the installation."
+  echo ""
+}
+
 # ─── Main ────────────────────────────────────────────────────────────────────
 
 main() {
@@ -711,11 +910,20 @@ main() {
 
   parse_args "$@"
 
+  if [[ "$UPGRADE_MODE" == true ]]; then
+    detect_os
+    ensure_curl
+    ensure_node
+    run_upgrade
+    return 0
+  fi
+
   check_dependencies
   acquire_project
   install_dependencies
   init_config
   verify_installation
+  register_cli
   show_completion
   start_services
 }
