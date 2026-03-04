@@ -9,7 +9,6 @@
 # Options:
 #   --no-prompt          Non-interactive mode (for CI/CD)
 #   --skip-ui            Skip UI dependency installation
-#   --api-key <key>      Set Anthropic API key directly
 #   --dir <path>         Installation directory (default: ./agent-factory)
 #   --version <ver>      Install specific version (e.g. v0.2.0, default: latest)
 #
@@ -28,7 +27,6 @@ NVM_INSTALL_URL="https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh
 
 INTERACTIVE=true
 SKIP_UI=false
-API_KEY=""
 INSTALL_DIR=""
 VERSION=""
 
@@ -94,11 +92,6 @@ parse_args() {
         SKIP_UI=true
         shift
         ;;
-      --api-key)
-        [[ -z "${2:-}" ]] && fatal "--api-key requires a value"
-        API_KEY="$2"
-        shift 2
-        ;;
       --dir)
         [[ -z "${2:-}" ]] && fatal "--dir requires a value"
         INSTALL_DIR="$2"
@@ -130,7 +123,6 @@ Usage:
 Options:
   --no-prompt          Non-interactive mode (skip all prompts)
   --skip-ui            Skip UI dependency installation
-  --api-key <key>      Set Anthropic API key directly
   --dir <path>         Installation directory (default: ./agent-factory)
   --version <ver>      Install specific version (e.g. v0.2.0)
   -h, --help           Show this help message
@@ -138,9 +130,6 @@ Options:
 Examples:
   # Interactive install (recommended)
   bash install.sh
-
-  # CI/CD install with API key
-  bash install.sh --no-prompt --api-key sk-ant-xxx
 
   # Install specific version to custom directory
   bash install.sh --version v0.2.0 --dir ~/my-factory
@@ -335,7 +324,7 @@ ensure_npm() {
 }
 
 check_dependencies() {
-  step "Step 1/6: Checking system dependencies"
+  step "Step 1/5: Checking system dependencies"
 
   detect_os
   ensure_curl
@@ -408,7 +397,7 @@ clone_repo() {
 }
 
 acquire_project() {
-  step "Step 2/6: Acquiring Agent Factory"
+  step "Step 2/5: Acquiring Agent Factory"
 
   # Check if we are already inside the project directory
   if [[ -f "package.json" ]] && grep -q '"name": "agent-factory"' package.json 2>/dev/null; then
@@ -449,7 +438,7 @@ acquire_project() {
 # ─── Dependency Installation ─────────────────────────────────────────────────
 
 install_dependencies() {
-  step "Step 3/6: Installing dependencies"
+  step "Step 3/5: Installing dependencies"
 
   cd "$INSTALL_DIR"
 
@@ -475,7 +464,7 @@ install_dependencies() {
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 init_config() {
-  step "Step 4/6: Initializing configuration"
+  step "Step 4/5: Initializing configuration"
 
   cd "$INSTALL_DIR"
 
@@ -607,7 +596,7 @@ set_env_value() {
 # ─── Verification ────────────────────────────────────────────────────────────
 
 verify_installation() {
-  step "Step 6/6: Verifying installation"
+  step "Step 5/5: Verifying installation"
 
   cd "$INSTALL_DIR"
 
@@ -665,32 +654,25 @@ verify_installation() {
 
 show_completion() {
   echo ""
-  echo -e "${BOLD}${GREEN}━━━ Installation Complete! ━━━${RESET}"
+  echo -e "${BOLD}${GREEN}━━━ Installation Complete! Starting services... ━━━${RESET}"
   echo ""
   echo -e "  ${BOLD}Project location:${RESET}  $INSTALL_DIR"
-  echo ""
-  echo -e "  ${BOLD}To start Agent Factory:${RESET}"
-  echo -e "    cd $INSTALL_DIR"
-  echo -e "    npm start"
   echo ""
   echo -e "  ${BOLD}Services:${RESET}"
   echo -e "    Dashboard:  ${CYAN}http://localhost:3100${RESET}"
   echo -e "    Gateway:    ${CYAN}http://localhost:19100${RESET}"
   echo ""
-  echo -e "  ${BOLD}Other commands:${RESET}"
-  echo -e "    npm run ui       ${DIM}# Start Dashboard only${RESET}"
-  echo -e "    npm run gateway  ${DIM}# Start Gateway only${RESET}"
+  echo -e "  ${YELLOW}Next:${RESET} Configure your API keys at ${CYAN}http://localhost:3100/settings${RESET}"
   echo ""
-
-  if [[ -f "$INSTALL_DIR/.env" ]] && ! grep -qE '^ANTHROPIC_API_KEY=sk-ant-[A-Za-z0-9]' "$INSTALL_DIR/.env"; then
-    echo -e "  ${YELLOW}Note:${RESET} Don't forget to set your API key in .env:"
-    echo -e "    ${DIM}echo 'ANTHROPIC_API_KEY=sk-ant-...' >> $INSTALL_DIR/.env${RESET}"
-    echo ""
-  fi
-
   echo -e "  ${DIM}Docs:  ${GITHUB_REPO}${RESET}"
   echo -e "  ${DIM}Issues: ${GITHUB_REPO}/issues${RESET}"
   echo ""
+}
+
+start_services() {
+  step "Starting Agent Factory"
+  cd "$INSTALL_DIR"
+  npm start
 }
 
 # ─── Main ────────────────────────────────────────────────────────────────────
@@ -714,9 +696,9 @@ main() {
   acquire_project
   install_dependencies
   init_config
-  configure_api_keys
   verify_installation
   show_completion
+  start_services
 }
 
 main "$@"
