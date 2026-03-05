@@ -4,9 +4,10 @@
  *
  * Migrates existing agents to the new workspace layout:
  * 1. Ensures workspaces/{id}/ exists for each agent (output directory)
- * 2. Moves output directories (e.g. agents/novel-chief/novel/) to workspaces/{id}/
- * 3. Ensures config/openclaw.json workspace paths point to agents/{id}/ (definition dir)
- * 4. Creates projects/{department}/ and assigns department agents
+ * 2. Removes old symlinks in workspaces/{id}/ (left by pre-0.3.3 versions)
+ * 3. Moves output directories (e.g. agents/novel-chief/novel/) to workspaces/{id}/
+ * 4. Ensures config/openclaw.json workspace paths point to agents/{id}/ (definition dir)
+ * 5. Creates projects/{department}/ and assigns department agents
  *
  * Architecture:
  *   agents/{id}/     = agent core (AGENTS.md, SOUL.md, memory, skills, agent.json)
@@ -19,7 +20,7 @@
  *   node scripts/migrate-workspaces.mjs --dry-run  # preview only
  */
 
-import { existsSync, readdirSync, mkdirSync, renameSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, readdirSync, mkdirSync, renameSync, readFileSync, writeFileSync, lstatSync, unlinkSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -65,7 +66,21 @@ function migrateAgent(agentId) {
     if (!DRY_RUN) mkdirSync(workspaceDir, { recursive: true })
   }
 
-  // 2. Move non-core entries from agents/{id}/ to workspaces/{id}/
+  // 2. Clean up old symlinks in workspaces/{id}/ (left by pre-0.3.3 versions)
+  if (existsSync(workspaceDir)) {
+    const wsEntries = readdirSync(workspaceDir)
+    for (const name of wsEntries) {
+      const p = join(workspaceDir, name)
+      try {
+        if (lstatSync(p).isSymbolicLink()) {
+          log(`  unlink symlink workspaces/${agentId}/${name}`)
+          if (!DRY_RUN) unlinkSync(p)
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  // 3. Move non-core entries from agents/{id}/ to workspaces/{id}/
   const entries = readdirSync(agentDir, { withFileTypes: true })
   for (const entry of entries) {
     if (CORE_ENTRIES.has(entry.name)) continue
