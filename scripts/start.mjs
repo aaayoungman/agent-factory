@@ -7,7 +7,7 @@
 
 import { resolve } from 'node:path';
 import { existsSync, readFileSync, copyFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import net from 'node:net';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -71,6 +71,23 @@ function hasAnyApiKey() {
   return hasAuthProfiles();
 }
 
+function isPortInUse(port) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(1000);
+    socket.once('connect', () => { socket.destroy(); resolve(true); });
+    socket.once('error', () => { socket.destroy(); resolve(false); });
+    socket.once('timeout', () => { socket.destroy(); resolve(false); });
+    socket.connect(port, '127.0.0.1');
+  });
+}
+
+function killPort(port) {
+  try {
+    execSync(`lsof -ti:${port} | xargs kill 2>/dev/null`, { stdio: 'ignore' });
+  } catch { /* no process on port */ }
+}
+
 function waitForPort(host, port, timeoutMs = 30000) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
@@ -101,6 +118,15 @@ process.on('SIGTERM', cleanup);
 
 async function startDashboard() {
   console.log(`🖥️  Starting Dashboard on port ${UI_PORT}...`);
+
+  // Kill any stale process on the port before starting
+  if (await isPortInUse(UI_PORT)) {
+    console.log(`  Port ${UI_PORT} in use, killing stale process...`);
+    killPort(UI_PORT);
+    // Brief wait for port release
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
   dashboardProcess = spawn('npm', ['run', 'dev'], {
     cwd: resolve(ROOT, 'ui'),
     env: {
@@ -155,6 +181,13 @@ async function startGateway() {
   }
 
   console.log(`🚀 Starting Gateway on port ${GW_PORT}...`);
+
+  if (await isPortInUse(GW_PORT)) {
+    console.log(`  Port ${GW_PORT} in use, killing stale process...`);
+    killPort(GW_PORT);
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
   gatewayProcess = spawn(openclawBin, ['gateway', '--port', String(GW_PORT), '--force'], {
     env: {
       ...process.env,
