@@ -6,7 +6,7 @@
 //   agent-factory <command>
 //
 // Commands:
-//   start     Start Dashboard + Gateway (foreground)
+//   start     Start Dashboard + Gateway (background)
 //   stop      Stop all services
 //   restart   Restart all services
 //   status    Show running status (ports, PIDs, version)
@@ -123,21 +123,24 @@ function killPort(port) {
 // ─── Commands ────────────────────────────────────────────────────────────────
 
 async function cmdStart() {
-  console.log(c.cyan('Starting Agent Factory...'));
+  const logDir = resolve(ROOT, '.openclaw-state');
+  mkdirSync(logDir, { recursive: true });
+  const logFile = resolve(logDir, 'startup.log');
+  const { openSync } = await import('node:fs');
+  const out = openSync(logFile, 'a');
+
   const child = spawn('node', ['scripts/start.mjs'], {
     cwd: ROOT,
-    stdio: 'inherit',
+    stdio: ['ignore', out, out],
     env: { ...process.env, AGENT_FACTORY_DIR: ROOT },
+    detached: true,
   });
+  child.unref();
 
-  // Forward signals so Ctrl-C cleanly stops everything
-  const forward = sig => { child.kill(sig); };
-  process.on('SIGINT', forward);
-  process.on('SIGTERM', forward);
-
-  child.on('exit', (code) => {
-    process.exit(code ?? 0);
-  });
+  console.log(c.green('Agent Factory started.'));
+  console.log(`  Dashboard:  ${c.cyan('http://localhost:3100')}`);
+  console.log(`  Logs:       ${c.dim('agent-factory logs')}`);
+  console.log(`  Stop:       ${c.dim('agent-factory stop')}`);
 }
 
 async function cmdStop() {
@@ -445,7 +448,7 @@ ${c.bold('Usage:')}
   agent-factory <command>
 
 ${c.bold('Commands:')}
-  start       Start Dashboard + Gateway (foreground)
+  start       Start Dashboard + Gateway (background)
   stop        Stop all services
   restart     Restart all services
   status      Show running status (ports, PIDs, version)
