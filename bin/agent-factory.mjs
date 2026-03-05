@@ -57,6 +57,10 @@ function resolveRoot() {
   const fallback = resolve(__dirname, '..');
   if (existsSync(resolve(fallback, 'package.json'))) return fallback;
 
+  // 4. Fixed install location ~/.agent-factory
+  const fixed = resolve(homedir(), '.agent-factory');
+  if (existsSync(resolve(fixed, 'package.json'))) return fixed;
+
   console.error(c.red('Error: Cannot locate agent-factory project directory.'));
   console.error('Set AGENT_FACTORY_DIR or run install.sh to configure.');
   process.exit(1);

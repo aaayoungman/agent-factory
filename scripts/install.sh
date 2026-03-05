@@ -9,7 +9,7 @@
 # Options:
 #   --no-prompt          Non-interactive mode (for CI/CD)
 #   --skip-ui            Skip UI dependency installation
-#   --dir <path>         Installation directory (default: ./agent-factory)
+#   --dir <path>         Installation directory (default: ~/.agent-factory)
 #   --version <ver>      Install specific version (e.g. v0.2.0, default: latest)
 #
 set -euo pipefail
@@ -128,7 +128,7 @@ Usage:
 Options:
   --no-prompt          Non-interactive mode (skip all prompts)
   --skip-ui            Skip UI dependency installation
-  --dir <path>         Installation directory (default: ./agent-factory)
+  --dir <path>         Installation directory (default: ~/.agent-factory)
   --version <ver>      Install specific version (e.g. v0.2.0)
   --upgrade            Upgrade existing installation to latest version
   -h, --help           Show this help message
@@ -415,9 +415,9 @@ acquire_project() {
     return 0
   fi
 
-  # Set default install directory
+  # Set default install directory — fixed location so updates always find it
   if [[ -z "$INSTALL_DIR" ]]; then
-    INSTALL_DIR="$(pwd)/${REPO_NAME}"
+    INSTALL_DIR="$HOME/.agent-factory"
   fi
 
   # Check if directory already exists and contains the project
@@ -810,7 +810,7 @@ find_existing_install() {
   fi
 
   # 4. Common locations
-  for candidate in "$HOME/agent-factory" "/opt/agent-factory" "./agent-factory"; do
+  for candidate in "$HOME/.agent-factory" "$HOME/agent-factory" "/opt/agent-factory" "./agent-factory"; do
     if [[ -f "$candidate/package.json" ]] && grep -q '"name": "agent-factory"' "$candidate/package.json" 2>/dev/null; then
       INSTALL_DIR="$(cd "$candidate" && pwd)"
       return 0
