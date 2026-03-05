@@ -4,14 +4,14 @@
  *
  * This script:
  * 1. Verifies templates/builtin/ has all template.json files
- * 2. Clears agents/ directory (only live instances should be here)
+ * 2. Preserves non-core output (moves to workspaces/) then clears agents/
  * 3. For each existing workspace, recreates agents/{id}/agent.json referencing the template
  * 4. Empties config/openclaw.json agents.list
  *
  * Usage: node scripts/migrate-to-templates.mjs [--dry-run]
  */
 
-import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, cpSync } from 'fs'
+import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, cpSync, lstatSync, renameSync, unlinkSync } from 'fs'
 import { join, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -27,6 +27,14 @@ const AGENTS_DIR = join(ROOT, 'agents')
 const TEMPLATES_DIR = join(ROOT, 'templates', 'builtin')
 const WORKSPACES_DIR = join(ROOT, 'workspaces')
 const OPENCLAW_CONFIG = join(ROOT, 'config', 'openclaw.json')
+
+// Agent core files/dirs — should NOT be moved to workspaces
+const CORE_ENTRIES = new Set([
+  'AGENTS.md', 'SOUL.md', 'IDENTITY.md', 'TOOLS.md', 'MEMORY.md',
+  'USER.md', 'HEARTBEAT.md', 'agent.json',
+  'memory', 'skills',
+  'agents',  // openclaw runtime subdir
+])
 
 // Step 1: Verify templates/builtin/ exists and has template.json files
 log('=== Step 1: Verify templates/builtin/ ===')
@@ -47,16 +55,45 @@ for (const d of templateDirs) {
   }
 }
 
-// Step 2: Clear agents/ directory
-log('\n=== Step 2: Clear agents/ directory ===')
+// Step 2: Preserve non-core content, then clear agents/ directory
+log('\n=== Step 2: Preserve output & clear agents/ ===')
 if (existsSync(AGENTS_DIR)) {
   const agentDirs = readdirSync(AGENTS_DIR, { withFileTypes: true })
-    .filter(d => d.isDirectory())
+    .filter(d => d.isDirectory() && !d.name.startsWith('.'))
 
   for (const d of agentDirs) {
+    const agentDir = join(AGENTS_DIR, d.name)
+    const workspaceDir = join(WORKSPACES_DIR, d.name)
+
+    // Move non-core entries to workspaces/ before deleting
+    const entries = readdirSync(agentDir, { withFileTypes: true })
+    for (const entry of entries) {
+      if (CORE_ENTRIES.has(entry.name)) continue
+      if (entry.name.startsWith('.')) continue
+
+      const src = join(agentDir, entry.name)
+
+      // Skip symlinks
+      try {
+        if (lstatSync(src).isSymbolicLink()) continue
+      } catch { continue }
+
+      const dest = join(workspaceDir, entry.name)
+      if (existsSync(dest)) {
+        log(`  skip ${d.name}/${entry.name} (already in workspaces/)`)
+        continue
+      }
+
+      log(`  preserve ${d.name}/${entry.name} → workspaces/${d.name}/${entry.name}`)
+      if (!dryRun) {
+        mkdirSync(workspaceDir, { recursive: true })
+        renameSync(src, dest)
+      }
+    }
+
     log(`  Removing agents/${d.name}/`)
     if (!dryRun) {
-      rmSync(join(AGENTS_DIR, d.name), { recursive: true, force: true })
+      rmSync(agentDir, { recursive: true, force: true })
     }
   }
 }
