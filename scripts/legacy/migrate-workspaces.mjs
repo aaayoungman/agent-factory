@@ -2,7 +2,10 @@
 /**
  * migrate-workspaces.mjs
  *
- * Migrates existing agents to the new workspace layout:
+ * Migrates existing agents to the new workspace layout.
+ * Skips automatically if already completed. Use --force to re-run.
+ *
+ * Steps:
  * 1. Ensures workspaces/{id}/ exists for each agent (output directory)
  * 2. Removes old symlinks in workspaces/{id}/ (left by pre-0.3.3 versions)
  * 3. Moves output directories (e.g. agents/novel-chief/novel/) to workspaces/{id}/
@@ -16,8 +19,9 @@
  *   base-rules.md instructs agents to write output to workspaces/{id}/
  *
  * Usage:
- *   node scripts/migrate-workspaces.mjs           # execute migration
- *   node scripts/migrate-workspaces.mjs --dry-run  # preview only
+ *   node scripts/migrate-workspaces.mjs              # execute migration
+ *   node scripts/migrate-workspaces.mjs --dry-run    # preview only
+ *   node scripts/migrate-workspaces.mjs --force      # re-run even if already done
  */
 
 import { existsSync, readdirSync, mkdirSync, renameSync, readFileSync, writeFileSync, lstatSync, unlinkSync } from 'fs'
@@ -32,11 +36,22 @@ const AGENTS_DIR = join(PROJECT_ROOT, 'agents')
 const WORKSPACES_DIR = join(PROJECT_ROOT, 'workspaces')
 const PROJECTS_DIR = join(PROJECT_ROOT, 'projects')
 const OPENCLAW_CONFIG = join(PROJECT_ROOT, 'config', 'openclaw.json')
+const MIGRATIONS_DIR = join(PROJECT_ROOT, '.openclaw-state', 'migrations')
+const MARKER = join(MIGRATIONS_DIR, 'migrate-workspaces.done')
 
-const DRY_RUN = process.argv.includes('--dry-run')
+const args = process.argv.slice(2)
+const DRY_RUN = args.includes('--dry-run')
+const force = args.includes('--force')
 
 function log(msg) {
   console.log(DRY_RUN ? `[DRY-RUN] ${msg}` : msg)
+}
+
+// ── Idempotency check ──
+if (!force && existsSync(MARKER)) {
+  const doneAt = readFileSync(MARKER, 'utf-8').trim()
+  console.log(`migrate-workspaces: already completed (${doneAt}). Use --force to re-run.`)
+  process.exit(0)
 }
 
 // Agent core files/dirs — should NOT be moved to workspaces
@@ -228,6 +243,12 @@ for (const id of agentIds) {
 
 ensureOpenclawConfig()
 ensureDepartmentProjects(agentIds)
+
+// Write completion marker
+if (!DRY_RUN) {
+  mkdirSync(MIGRATIONS_DIR, { recursive: true })
+  writeFileSync(MARKER, new Date().toISOString())
+}
 
 console.log(`\n${'='.repeat(60)}`)
 console.log(DRY_RUN ? `  Dry run complete. Run without --dry-run to execute.` : `  Done! Restart Gateway to apply.`)

@@ -6,15 +6,41 @@
  * 3. Regenerate TOOLS.md
  * 4. Regenerate AGENTS.md (with peer communication directory)
  * 5. Re-inject base-rules
+ *
+ * Non-destructive: creates .bak backups before overwriting files.
+ * Skips automatically if already completed. Use --force to re-run.
+ *
+ * Usage:
+ *   node scripts/migrate-peer-status.mjs              # execute
+ *   node scripts/migrate-peer-status.mjs --dry-run    # preview only
+ *   node scripts/migrate-peer-status.mjs --force      # re-run even if already done
  */
 
-import { existsSync, readFileSync, writeFileSync, readdirSync, symlinkSync, lstatSync, unlinkSync, mkdirSync } from 'fs'
-import { join, resolve } from 'path'
+import { existsSync, readFileSync, writeFileSync, readdirSync, symlinkSync, lstatSync, unlinkSync, mkdirSync, copyFileSync } from 'fs'
+import { join, resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
-const PROJECT_ROOT = resolve(new URL('.', import.meta.url).pathname, '..')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const PROJECT_ROOT = resolve(__dirname, '..')
+
+const args = process.argv.slice(2)
+const dryRun = args.includes('--dry-run')
+const force = args.includes('--force')
+const log = (msg) => console.log(`${dryRun ? '[DRY-RUN] ' : ''}${msg}`)
+
 const AGENTS_DIR = join(PROJECT_ROOT, 'agents')
 const SKILLS_DIR = join(PROJECT_ROOT, 'skills')
 const PEER_STATUS_SKILL_DIR = join(SKILLS_DIR, 'peer-status')
+const MIGRATIONS_DIR = join(PROJECT_ROOT, '.openclaw-state', 'migrations')
+const MARKER = join(MIGRATIONS_DIR, 'migrate-peer-status.done')
+
+// ── Idempotency check ──
+if (!force && existsSync(MARKER)) {
+  const doneAt = readFileSync(MARKER, 'utf-8').trim()
+  console.log(`migrate-peer-status: already completed (${doneAt}). Use --force to re-run.`)
+  process.exit(0)
+}
 
 // ── TOOLS.md generation (mirrors route.ts logic) ─────────────────
 
@@ -194,27 +220,42 @@ function injectIntoSoulMd(content, soulRules) {
   return parts.join('\n') + '\n'
 }
 
+// ── Helper: backup file before overwriting ───────────────────────
+
+function backupFile(filePath) {
+  if (!dryRun && existsSync(filePath)) {
+    copyFileSync(filePath, filePath + '.bak')
+  }
+}
+
 // ── Main migration ───────────────────────────────────────────────
 
 function main() {
-  console.log('=== Peer Status Migration ===\n')
+  log('=== Peer Status Migration ===\n')
 
   // Verify peer-status skill exists
   if (!existsSync(PEER_STATUS_SKILL_DIR)) {
-    console.error('ERROR: skills/peer-status/ not found. Create the skill first.')
-    process.exit(1)
+    console.log('migrate-peer-status: skills/peer-status/ not found. Skipping.')
+    process.exit(0)
+  }
+
+  if (!existsSync(AGENTS_DIR)) {
+    console.log('migrate-peer-status: no agents/ directory. Skipping.')
+    process.exit(0)
   }
 
   // Read base rules
   let baseRules = null
   if (existsSync(BASE_RULES_PATH)) {
     baseRules = parseBaseRules(readFileSync(BASE_RULES_PATH, 'utf-8'))
-    console.log('Loaded base-rules.md')
+    log('Loaded base-rules.md')
   }
 
   // Iterate all agents
   const agents = readdirSync(AGENTS_DIR, { withFileTypes: true })
     .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+
+  let processed = 0
 
   for (const agentEntry of agents) {
     const agentId = agentEntry.name
@@ -222,7 +263,7 @@ function main() {
     const agentJsonPath = join(agentDir, 'agent.json')
 
     if (!existsSync(agentJsonPath)) {
-      console.log(`  SKIP ${agentId} — no agent.json`)
+      log(`  SKIP ${agentId} — no agent.json`)
       continue
     }
 
@@ -230,11 +271,11 @@ function main() {
     const peers = config.peers || []
 
     if (peers.length === 0) {
-      console.log(`  SKIP ${agentId} — no peers`)
+      log(`  SKIP ${agentId} — no peers`)
       continue
     }
 
-    console.log(`\n  Processing ${agentId} (${peers.length} peers)...`)
+    log(`\n  Processing ${agentId} (${peers.length} peers)...`)
 
     // 1. Add peer-status to skills if not already present
     const skills = config.skills || []
@@ -242,38 +283,49 @@ function main() {
       skills.push('peer-status')
       config.skills = skills
       config.updatedAt = new Date().toISOString()
-      writeFileSync(agentJsonPath, JSON.stringify(config, null, 2) + '\n')
-      console.log(`    + Added peer-status to skills`)
+      if (!dryRun) {
+        backupFile(agentJsonPath)
+        writeFileSync(agentJsonPath, JSON.stringify(config, null, 2) + '\n')
+      }
+      log(`    + Added peer-status to skills`)
     } else {
-      console.log(`    - peer-status already in skills`)
+      log(`    - peer-status already in skills`)
     }
 
     // 2. Create symlink for peer-status skill
     const skillsDir = join(agentDir, 'skills')
-    if (!existsSync(skillsDir)) mkdirSync(skillsDir, { recursive: true })
+    if (!dryRun && !existsSync(skillsDir)) mkdirSync(skillsDir, { recursive: true })
     const linkPath = join(skillsDir, 'peer-status')
 
-    // Remove existing link if present
+    // Remove existing link if present (only symlinks, not real dirs)
     try {
       if (existsSync(linkPath) && lstatSync(linkPath).isSymbolicLink()) {
-        unlinkSync(linkPath)
+        if (!dryRun) unlinkSync(linkPath)
       }
     } catch {}
 
     if (!existsSync(linkPath)) {
-      try {
-        symlinkSync(PEER_STATUS_SKILL_DIR, linkPath, 'dir')
-        console.log(`    + Created symlink skills/peer-status`)
-      } catch (e) {
-        console.error(`    ! Failed to create symlink: ${e.message}`)
+      if (!dryRun) {
+        try {
+          symlinkSync(PEER_STATUS_SKILL_DIR, linkPath, 'dir')
+          log(`    + Created symlink skills/peer-status`)
+        } catch (e) {
+          console.error(`    ! Failed to create symlink: ${e.message}`)
+        }
+      } else {
+        log(`    + Would create symlink skills/peer-status`)
       }
     }
 
-    // 3. Regenerate TOOLS.md
-    writeFileSync(join(agentDir, 'TOOLS.md'), generateToolsMd(agentId, skills, agentDir))
-    console.log(`    + Regenerated TOOLS.md`)
+    // 3. Regenerate TOOLS.md (with backup)
+    const toolsMdPath = join(agentDir, 'TOOLS.md')
+    if (!dryRun) {
+      backupFile(toolsMdPath)
+      writeFileSync(toolsMdPath, generateToolsMd(agentId, skills, agentDir))
+    }
+    log(`    + Regenerated TOOLS.md`)
 
-    // 4. Inject peer communication directory into AGENTS.md
+    // 4. Inject peer communication directory into AGENTS.md (with backup)
     const agentsMdPath = join(agentDir, 'AGENTS.md')
     if (existsSync(agentsMdPath)) {
       let agentsMd = readFileSync(agentsMdPath, 'utf-8')
@@ -290,22 +342,39 @@ function main() {
         agentsMd = injectIntoAgentsMd(agentsMd, baseRules.agentsRules, baseRules.reminder)
       }
 
-      writeFileSync(agentsMdPath, agentsMd)
-      console.log(`    + Updated AGENTS.md with peer directory + base-rules`)
+      if (!dryRun) {
+        backupFile(agentsMdPath)
+        writeFileSync(agentsMdPath, agentsMd)
+      }
+      log(`    + Updated AGENTS.md with peer directory + base-rules`)
     }
 
-    // 5. Re-inject soul rules
+    // 5. Re-inject soul rules (with backup)
     if (baseRules) {
       const soulMdPath = join(agentDir, 'SOUL.md')
       if (existsSync(soulMdPath)) {
         const soulMd = readFileSync(soulMdPath, 'utf-8')
-        writeFileSync(soulMdPath, injectIntoSoulMd(soulMd, baseRules.soulRules))
-        console.log(`    + Re-injected SOUL.md base-rules`)
+        if (!dryRun) {
+          backupFile(soulMdPath)
+          writeFileSync(soulMdPath, injectIntoSoulMd(soulMd, baseRules.soulRules))
+        }
+        log(`    + Re-injected SOUL.md base-rules`)
       }
     }
+
+    processed++
   }
 
-  console.log('\n=== Migration complete ===')
+  // Write completion marker
+  if (!dryRun) {
+    mkdirSync(MIGRATIONS_DIR, { recursive: true })
+    writeFileSync(MARKER, new Date().toISOString())
+  }
+
+  log(`\n=== Migration complete (${processed} agent(s) processed) ===`)
+  if (dryRun) {
+    log('[DRY-RUN] No changes were made. Run without --dry-run to apply.')
+  }
 }
 
 main()

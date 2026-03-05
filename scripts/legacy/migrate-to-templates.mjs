@@ -2,31 +2,45 @@
 /**
  * Migration script: agents/ → templates/builtin/
  *
+ * One-time migration. Skips automatically if already completed.
+ *
  * This script:
  * 1. Verifies templates/builtin/ has all template.json files
- * 2. Preserves non-core output (moves to workspaces/) then clears agents/
- * 3. For each existing workspace, recreates agents/{id}/agent.json referencing the template
- * 4. Empties config/openclaw.json agents.list
+ * 2. Backs up agents/ before any destructive operation
+ * 3. Preserves non-core output (moves to workspaces/) then clears agents/
+ * 4. For each existing workspace, recreates agents/{id}/agent.json referencing the template
+ * 5. Empties config/openclaw.json agents.list
  *
- * Usage: node scripts/migrate-to-templates.mjs [--dry-run]
+ * Usage: node scripts/migrate-to-templates.mjs [--dry-run] [--force]
  */
 
-import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, cpSync, lstatSync, renameSync, unlinkSync } from 'fs'
-import { join, resolve } from 'path'
+import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, cpSync, lstatSync, renameSync } from 'fs'
+import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { dirname } from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const ROOT = resolve(__dirname, '..')
 
-const dryRun = process.argv.includes('--dry-run')
+const args = process.argv.slice(2)
+const dryRun = args.includes('--dry-run')
+const force = args.includes('--force')
 const log = (msg) => console.log(`${dryRun ? '[DRY-RUN] ' : ''}${msg}`)
 
 const AGENTS_DIR = join(ROOT, 'agents')
 const TEMPLATES_DIR = join(ROOT, 'templates', 'builtin')
 const WORKSPACES_DIR = join(ROOT, 'workspaces')
 const OPENCLAW_CONFIG = join(ROOT, 'config', 'openclaw.json')
+const MIGRATIONS_DIR = join(ROOT, '.openclaw-state', 'migrations')
+const MARKER = join(MIGRATIONS_DIR, 'migrate-to-templates.done')
+const BACKUPS_DIR = join(ROOT, '.openclaw-state', 'backups')
+
+// ── Idempotency check ──
+if (!force && existsSync(MARKER)) {
+  const doneAt = readFileSync(MARKER, 'utf-8').trim()
+  console.log(`migrate-to-templates: already completed (${doneAt}). Use --force to re-run.`)
+  process.exit(0)
+}
 
 // Agent core files/dirs — should NOT be moved to workspaces
 const CORE_ENTRIES = new Set([
@@ -52,6 +66,25 @@ for (const d of templateDirs) {
     log(`  ✓ ${d.name}/template.json`)
   } else {
     log(`  ✗ ${d.name}/template.json — MISSING`)
+  }
+}
+
+// Step 1.5: Backup agents/ before any destructive operation
+if (existsSync(AGENTS_DIR)) {
+  const agentDirs = readdirSync(AGENTS_DIR, { withFileTypes: true })
+    .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+
+  if (agentDirs.length > 0) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const backupDir = join(BACKUPS_DIR, `agents-${timestamp}`)
+    log(`\n=== Backup: agents/ → ${backupDir} ===`)
+    if (!dryRun) {
+      mkdirSync(backupDir, { recursive: true })
+      for (const d of agentDirs) {
+        cpSync(join(AGENTS_DIR, d.name), join(backupDir, d.name), { recursive: true })
+      }
+    }
+    log(`  Backed up ${agentDirs.length} agent(s)`)
   }
 }
 
@@ -173,6 +206,12 @@ if (existsSync(OPENCLAW_CONFIG)) {
   if (!dryRun) {
     writeFileSync(OPENCLAW_CONFIG, JSON.stringify(config, null, 2) + '\n')
   }
+}
+
+// Write completion marker
+if (!dryRun) {
+  mkdirSync(MIGRATIONS_DIR, { recursive: true })
+  writeFileSync(MARKER, new Date().toISOString())
 }
 
 // Summary
