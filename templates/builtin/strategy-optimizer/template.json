@@ -1,0 +1,13 @@
+{
+  "id": "strategy-optimizer",
+  "name": "Strategy Optimizer",
+  "description": "策略优化师，负责参数优化、过拟合检测、绩效归因、多策略组合",
+  "emoji": "🐦",
+  "category": "builtin",
+  "group": "quant",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["quant-chief", "quant-researcher", "risk-manager", "market-analyst-crypto"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "execution-engineer",
+  "name": "Execution Engineer",
+  "description": "执行工程师，负责交易所API对接、订单执行优化、滑点控制、多所资金调度",
+  "emoji": "🐆",
+  "category": "builtin",
+  "group": "quant",
+  "defaults": {
+    "model": "minimax-portal/MiniMax-M2.5",
+    "skills": ["summarize", "session-logs"],
+    "peers": ["quant-chief", "quant-developer", "risk-manager", "data-engineer-quant"]
+  }
+}
