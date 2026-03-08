@@ -16,7 +16,9 @@
       "quant-chief",
       "quant-developer",
       "risk-manager",
-      "data-engineer-quant"
+      "data-engineer-quant",
+      "quant-researcher",
+      "strategy-optimizer"
     ]
   }
 }

@@ -15,7 +15,8 @@
     ],
     "peers": [
       "cfo",
-      "cost-analyst"
+      "cost-analyst",
+      "compliance-officer"
     ]
   }
 }

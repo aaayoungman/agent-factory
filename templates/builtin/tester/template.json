@@ -16,7 +16,9 @@
     "peers": [
       "pm",
       "frontend",
-      "backend"
+      "backend",
+      "designer",
+      "product"
     ]
   }
 }

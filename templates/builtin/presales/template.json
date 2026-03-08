@@ -19,7 +19,8 @@
       "pm",
       "frontend",
       "backend",
-      "product"
+      "product",
+      "csm"
     ]
   }
 }

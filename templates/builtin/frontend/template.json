@@ -17,7 +17,8 @@
       "backend",
       "tester",
       "presales",
-      "support-agent"
+      "support-agent",
+      "analyst"
     ]
   }
 }

@@ -15,7 +15,8 @@
     "peers": [
       "novel-chief",
       "novel-writer",
-      "character-designer"
+      "character-designer",
+      "reader-analyst"
     ]
   }
 }

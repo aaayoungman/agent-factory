@@ -15,7 +15,10 @@
     "peers": [
       "novel-chief",
       "pacing-designer",
-      "plot-architect"
+      "plot-architect",
+      "novel-writer",
+      "style-editor",
+      "continuity-mgr"
     ]
   }
 }

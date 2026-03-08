@@ -16,7 +16,8 @@
     "peers": [
       "legal-director",
       "contract-specialist",
-      "cfo"
+      "cfo",
+      "accountant"
     ]
   }
 }
