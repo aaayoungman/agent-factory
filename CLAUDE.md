@@ -4,7 +4,7 @@
 
 Agent Factory 是一个自包含的多 Agent 协作平台，内置 OpenClaw 引擎，提供 Dashboard UI 进行管理。
 
-- 版本: 0.3.11
+- 版本: 0.3.13
 - 仓库: https://github.com/shuanbao0/agent-factory
 - 运行时: Node.js >= 22
 - 许可: GPL-3.0
@@ -30,6 +30,7 @@ agent-factory/
 │   ├── start.mjs          # 统一启动脚本（Dashboard + Gateway）
 │   ├── autopilot.cjs      # Autopilot 循环脚本
 │   ├── inject-base-rules.mjs # 重新注入 base-rules 到所有 Agent
+│   ├── migrate-sync-builtin.mjs # 统一同步内置模板到已有 Agent（peers/skills/AGENTS.md/SOUL.md/IDENTITY.md）
 │   ├── migrate-workspaces.mjs # 工作空间迁移（产出从 agents/ 移到 workspaces/）
 │   └── migrate-to-templates.mjs
 ├── skills/                # 共享技能（project-init、wechat-mp-cn）
@@ -319,11 +320,11 @@ lsof -ti:3100 | xargs kill -9 2>/dev/null
 # 3. 重启开发服务器
 cd ui && npm run dev
 
-# 打包 + 发布一条龙
-tar -czf /tmp/agent-factory-vX.Y.Z.tar.gz --exclude='.git'
---exclude='node_modules' ...
-gh release create vX.Y.Z /tmp/agent-factory-vX.Y.Z.tar.gz
-scripts/install.sh
+# 发布新版本（CI 自动打包，无需手动操作）
+# 1. bump package.json version
+# 2. git tag vX.Y.Z && git push && git push origin vX.Y.Z
+# 3. GitHub Actions (.github/workflows/release.yml) 自动创建 Release + tarball
+# 其他机器即可通过 agent-factory update 更新
 ```
 
 **注意事项：**
