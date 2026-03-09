@@ -1,0 +1,14 @@
+{
+  "id": "research",
+  "name": "研究院",
+  "head": "chief-scientist",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "ai-researcher",
+    "chief-scientist",
+    "innovation-analyst"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

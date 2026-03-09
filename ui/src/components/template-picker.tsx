@@ -45,12 +45,29 @@ export function TemplatePicker({ templates, onSelect }: TemplatePickerProps) {
     })
   }
 
+  const BUILTIN_GROUPS: Record<string, { emoji: string; zh: string; en: string }> = {
+    executive: { emoji: '👔', zh: '高管层', en: 'Executive' },
+    dev: { emoji: '💻', zh: '软件开发部', en: 'Software Development' },
+    novel: { emoji: '✍️', zh: '网文创作部', en: 'Novel Writing' },
+    finance: { emoji: '💰', zh: '财务部', en: 'Finance' },
+    sales: { emoji: '📈', zh: '销售部', en: 'Sales' },
+    service: { emoji: '🎧', zh: '客户服务部', en: 'Customer Service' },
+    ops: { emoji: '🏗️', zh: '运营部', en: 'Operations' },
+    legal: { emoji: '⚖️', zh: '法务合规部', en: 'Legal & Compliance' },
+    research: { emoji: '🔬', zh: '研究院', en: 'Research Lab' },
+    brand: { emoji: '📢', zh: '品牌传播部', en: 'Brand & PR' },
+    anime: { emoji: '🎬', zh: '动漫制作部', en: 'Anime Production' },
+  }
+
   const getGroupLabel = (groupId: string): { emoji: string; label: string } => {
     const dept = deptMap.get(groupId)
     if (dept) {
       return { emoji: dept.emoji, label: locale === 'zh' ? dept.name : dept.nameEn }
     }
-    // Fallback for 'other' or unknown groups
+    const builtin = BUILTIN_GROUPS[groupId]
+    if (builtin) {
+      return { emoji: builtin.emoji, label: locale === 'zh' ? builtin.zh : builtin.en }
+    }
     return { emoji: '🤖', label: t('agents.groupOther') }
   }
 

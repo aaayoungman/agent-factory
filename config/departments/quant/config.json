@@ -1,0 +1,19 @@
+{
+  "id": "quant",
+  "name": "量化交易部",
+  "head": "quant-chief",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "quant-chief",
+    "data-engineer-quant",
+    "risk-manager",
+    "strategy-optimizer",
+    "execution-engineer",
+    "market-analyst-crypto",
+    "quant-researcher",
+    "quant-developer"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

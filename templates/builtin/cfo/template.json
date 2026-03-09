@@ -4,7 +4,7 @@
   "description": "首席财务官，负责财务战略、预算管理、财报分析、投资决策",
   "emoji": "💰",
   "category": "builtin",
-  "group": "finance",
+  "group": "executive",
   "defaults": {
     "model": "minimax-portal/MiniMax-M2.5",
     "skills": [

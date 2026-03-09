@@ -1,0 +1,13 @@
+{
+  "id": "finance",
+  "name": "财务部",
+  "head": "accountant",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "cost-analyst",
+    "accountant"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

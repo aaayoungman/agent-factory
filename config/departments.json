@@ -1,6 +1,20 @@
 {
   "departments": [
     {
+      "id": "executive",
+      "name": "高管层",
+      "nameEn": "Executive",
+      "emoji": "👔",
+      "order": -1,
+      "floorColor": { "h": 0, "s": 15, "b": 18, "c": 0 },
+      "furniture": [
+        { "type": "desk", "count": 3 },
+        { "type": "bookshelf", "count": 1 },
+        { "type": "meeting_table", "count": 1 },
+        { "type": "plant", "count": 2 }
+      ]
+    },
+    {
       "id": "dev",
       "name": "软件开发部",
       "nameEn": "Software Development",

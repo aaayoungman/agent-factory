@@ -4,7 +4,7 @@
 const { join } = require('path')
 const { readFileSync, existsSync } = require('fs')
 const { DEPARTMENTS_DIR, PROJECTS_DIR } = require('./constants.cjs')
-const { readAgentActivity, readProjectTasks } = require('./readers.cjs')
+const { readAgentActivity, readProjectTasks, readDeptMission } = require('./readers.cjs')
 const { buildMemoryContext } = require('./memory.cjs')
 const logger = require('./logger.cjs')
 
@@ -109,10 +109,14 @@ function buildDepartmentDirective(deptId, config, state) {
     ? `今日已用: ${state.tokensUsedToday || 0} / ${config.budget.dailyTokenLimit} tokens`
     : '(无预算限制)'
 
+  // Read department mission
+  const deptMission = readDeptMission(deptId)
+  const missionSection = deptMission ? `\n## 部门使命\n${deptMission}\n` : ''
+
   return `[Department Loop: ${deptId} Cycle #${(state.cycleCount || 0) + 1}]
 
 你是 ${config.head}，${config.name || deptId} 部门主管。
-${memorySection}
+${memorySection}${missionSection}
 ## CEO 指令
 ${readCeoDirectives(deptId)}
 
@@ -133,6 +137,7 @@ ${buildKpiStatus(deptId, config.kpis)}
 2. **检查进行中任务的产出质量** — 确保输出符合标准
 3. **向 CEO 汇报关键进展** — 将重要信息写入部门报告
 4. **更新你的 MEMORY.md** — 记录本轮做了什么
+5. **如果部门方向、工作重点发生变化，更新部门使命文件** — 写入 config/departments/${deptId}/mission.md
 
 ## 行动原则
 - 空闲 agent 必须有事做

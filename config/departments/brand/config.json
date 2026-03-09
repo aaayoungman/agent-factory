@@ -1,0 +1,14 @@
+{
+  "id": "brand",
+  "name": "品牌传播部",
+  "head": "brand-director",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "brand-director",
+    "content-creator",
+    "pr-specialist"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

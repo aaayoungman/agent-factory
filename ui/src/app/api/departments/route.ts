@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readDepartments, writeDepartments } from '@/lib/department-meta'
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join, resolve } from 'path'
 
 export const dynamic = 'force-dynamic'
 
 const PROJECT_ROOT = resolve(process.cwd(), '..')
 const AGENTS_DIR = join(PROJECT_ROOT, 'agents')
+const AUTOPILOT_DEPT_DIR = join(PROJECT_ROOT, 'config/departments')
 
 /** GET — list all departments */
 export async function GET() {
@@ -48,6 +49,24 @@ export async function POST(req: NextRequest) {
 
     departments.sort((a, b) => a.order - b.order)
     writeDepartments(departments)
+
+    // Auto-create autopilot department config if not exists
+    const autopilotDeptDir = join(AUTOPILOT_DEPT_DIR, id)
+    if (!existsSync(autopilotDeptDir)) {
+      mkdirSync(autopilotDeptDir, { recursive: true })
+      const defaultConfig = {
+        id,
+        name,
+        head: '',
+        interval: 600,
+        enabled: false,
+        agents: [],
+        budget: { dailyTokenLimit: 500000, alertThreshold: 0.8 },
+        kpis: {},
+      }
+      writeFileSync(join(autopilotDeptDir, 'config.json'), JSON.stringify(defaultConfig, null, 2))
+      writeFileSync(join(autopilotDeptDir, 'mission.md'), `# ${name}\n\n（待定义部门使命）\n`)
+    }
 
     return NextResponse.json({ ok: true, id })
   } catch (e) {
@@ -110,6 +129,26 @@ export async function DELETE(req: NextRequest) {
 
     departments.splice(idx, 1)
     writeDepartments(departments)
+
+    // Disable autopilot department config (don't delete — preserve history)
+    const autopilotConfigPath = join(AUTOPILOT_DEPT_DIR, id, 'config.json')
+    if (existsSync(autopilotConfigPath)) {
+      try {
+        const config = JSON.parse(readFileSync(autopilotConfigPath, 'utf-8'))
+        // Kill running process if any
+        const statePath = join(AUTOPILOT_DEPT_DIR, id, 'state.json')
+        if (existsSync(statePath)) {
+          try {
+            const state = JSON.parse(readFileSync(statePath, 'utf-8'))
+            if (state.pid) {
+              try { process.kill(state.pid, 'SIGTERM') } catch { /* already dead */ }
+            }
+          } catch { /* skip */ }
+        }
+        config.enabled = false
+        writeFileSync(autopilotConfigPath, JSON.stringify(config, null, 2))
+      } catch { /* skip */ }
+    }
 
     return NextResponse.json({ ok: true, clearedAgents: agentCount })
   } catch (e) {

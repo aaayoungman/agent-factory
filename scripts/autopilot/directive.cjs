@@ -143,6 +143,7 @@ ${context}
    - 项目管理/开发协调 → 调用 pm
    - 营销推广 → 调用 marketing
 4. **更新 MEMORY.md**：记录本轮做了什么、发现了什么问题、下轮关注什么
+5. **更新 config/mission.md（仅在必要时）**：如果公司方向、项目状态、核心能力发生了实质变化，更新"当前状态"等相关章节。保持使命愿景稳定，只更新事实性内容
 
 ## 行动原则
 
@@ -221,7 +222,9 @@ ${context}
 4. **风险评估**：有哪些潜在风险需要提前准备？
 5. **下阶段规划**：制定接下来的战略重点和里程碑
 
-请将你的战略思考更新到 MEMORY.md 中。`
+请将你的战略思考更新到 MEMORY.md 中。
+
+如果战略方向有实质调整（如新增/砍掉业务线、核心能力变化、阶段转换），同步更新 \`config/mission.md\` 的相关章节（特别是"当前状态"和"运营模式"）。愿景和原则部分保持稳定，除非有根本性转变。`
 }
 
 module.exports = { buildDirective, buildCoordinationDirective, buildStrategyDirective }

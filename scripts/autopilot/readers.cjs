@@ -240,6 +240,21 @@ function saveDeptState(deptId, state) {
   }
 }
 
+/**
+ * Read a department's mission file
+ */
+function readDeptMission(deptId) {
+  const missionPath = join(DEPARTMENTS_DIR, deptId, 'mission.md')
+  try {
+    if (existsSync(missionPath)) {
+      return readFileSync(missionPath, 'utf-8')
+    }
+  } catch (err) {
+    logger.debug('readers', `Failed to read mission for dept ${deptId}`, err)
+  }
+  return ''
+}
+
 module.exports = {
   readMission,
   readWorkspaceFile,
@@ -253,4 +268,5 @@ module.exports = {
   loadDeptConfig,
   loadDeptState,
   saveDeptState,
+  readDeptMission,
 }

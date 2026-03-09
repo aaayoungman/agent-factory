@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync, renameSync } from 'fs'
 import { resolve, join } from 'path'
 
 export const dynamic = 'force-dynamic'
 
 const PROJECT_ROOT = resolve(process.cwd(), '..')
 const DEPARTMENTS_DIR = join(PROJECT_ROOT, 'config/departments')
+const AGENTS_DIR = join(PROJECT_ROOT, 'agents')
+
+function atomicWriteSync(filePath: string, data: string) {
+  const tmpPath = filePath + '.tmp.' + process.pid
+  writeFileSync(tmpPath, data)
+  renameSync(tmpPath, filePath)
+}
 
 /**
  * GET /api/autopilot/departments — list all department loop states
@@ -46,11 +53,23 @@ export async function GET() {
           } catch {}
         }
 
+        // Read department mission
+        let mission = ''
+        const missionPath = join(DEPARTMENTS_DIR, dir.name, 'mission.md')
+        if (existsSync(missionPath)) {
+          try { mission = readFileSync(missionPath, 'utf-8').slice(0, 3000) } catch {}
+        }
+
+        // Check if head agent actually exists
+        const headExists = config.head ? existsSync(join(AGENTS_DIR, config.head)) : false
+
         departments.push({
           ...config,
           state,
           report,
           directives,
+          mission,
+          headExists,
         })
       } catch {}
     }
@@ -66,7 +85,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { deptId, enabled, interval, directives } = body
+    const { deptId, enabled, interval, directives, mission } = body
 
     if (!deptId) {
       return NextResponse.json({ ok: false, error: 'deptId required' }, { status: 400 })
@@ -82,12 +101,18 @@ export async function POST(req: Request) {
     const config = JSON.parse(readFileSync(configPath, 'utf-8'))
     if (enabled !== undefined) config.enabled = enabled
     if (interval !== undefined) config.interval = interval
-    writeFileSync(configPath, JSON.stringify(config, null, 2))
+    atomicWriteSync(configPath, JSON.stringify(config, null, 2))
+
+    // Update department mission
+    if (mission !== undefined) {
+      const missionPath = join(deptDir, 'mission.md')
+      atomicWriteSync(missionPath, mission)
+    }
 
     // Update CEO directives
     if (directives !== undefined) {
       const directivesPath = join(deptDir, 'ceo-directives.json')
-      writeFileSync(directivesPath, JSON.stringify({
+      atomicWriteSync(directivesPath, JSON.stringify({
         directives: Array.isArray(directives) ? directives : [directives],
         updatedAt: new Date().toISOString(),
       }, null, 2))

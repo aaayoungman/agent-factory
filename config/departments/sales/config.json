@@ -1,0 +1,14 @@
+{
+  "id": "sales",
+  "name": "销售部",
+  "head": "sales-director",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "bd",
+    "sales-director",
+    "presales"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

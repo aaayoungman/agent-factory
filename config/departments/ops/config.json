@@ -1,0 +1,13 @@
+{
+  "id": "ops",
+  "name": "运营部",
+  "head": "content-ops",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "content-ops",
+    "growth-ops"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

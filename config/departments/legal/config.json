@@ -1,0 +1,14 @@
+{
+  "id": "legal",
+  "name": "法务合规部",
+  "head": "legal-director",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "contract-specialist",
+    "legal-director",
+    "compliance-officer"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

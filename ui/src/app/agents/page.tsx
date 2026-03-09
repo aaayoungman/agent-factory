@@ -55,6 +55,20 @@ const OTHER_DEPT: Department = {
   furniture: [],
 }
 
+const BUILTIN_GROUP_DEPTS: Record<string, Department> = {
+  executive: { id: 'executive', name: '高管层', nameEn: 'Executive', emoji: '👔', order: 0, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  dev: { id: 'dev', name: '软件开发部', nameEn: 'Software Development', emoji: '💻', order: 100, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  novel: { id: 'novel', name: '网文创作部', nameEn: 'Novel Writing', emoji: '✍️', order: 101, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  finance: { id: 'finance', name: '财务部', nameEn: 'Finance', emoji: '💰', order: 102, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  sales: { id: 'sales', name: '销售部', nameEn: 'Sales', emoji: '📈', order: 103, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  service: { id: 'service', name: '客户服务部', nameEn: 'Customer Service', emoji: '🎧', order: 104, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  ops: { id: 'ops', name: '运营部', nameEn: 'Operations', emoji: '🏗️', order: 105, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  legal: { id: 'legal', name: '法务合规部', nameEn: 'Legal & Compliance', emoji: '⚖️', order: 106, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  research: { id: 'research', name: '研究院', nameEn: 'Research Lab', emoji: '🔬', order: 107, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  brand: { id: 'brand', name: '品牌传播部', nameEn: 'Brand & PR', emoji: '📢', order: 108, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+  anime: { id: 'anime', name: '动漫制作部', nameEn: 'Anime Production', emoji: '🎬', order: 109, floorColor: { h: 0, s: 0, b: 0, c: 0 }, furniture: [] },
+}
+
 function AgentGroupedList({ agents, templates, departments, collapsedGroups, onToggleGroup, onEdit, onDelete, t, locale }: {
   agents: Agent[]
   templates: AgentTemplate[]
@@ -93,7 +107,7 @@ function AgentGroupedList({ agents, templates, departments, collapsedGroups, onT
   return (
     <div className="space-y-4">
       {sortedGroups.map(groupId => {
-        const dept = deptMap.get(groupId) || OTHER_DEPT
+        const dept = deptMap.get(groupId) || BUILTIN_GROUP_DEPTS[groupId] || OTHER_DEPT
         const groupAgents = grouped[groupId]
         const isCollapsed = collapsedGroups.has(groupId)
 

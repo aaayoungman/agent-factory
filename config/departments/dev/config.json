@@ -1,0 +1,22 @@
+{
+  "id": "dev",
+  "name": "软件开发部",
+  "head": "pm",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "main",
+    "marketing",
+    "pm",
+    "researcher",
+    "tester",
+    "analyst",
+    "designer",
+    "product",
+    "frontend",
+    "backend",
+    "writer"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

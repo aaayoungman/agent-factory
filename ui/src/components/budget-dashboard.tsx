@@ -1,29 +1,17 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
 import { Wallet, AlertTriangle } from 'lucide-react'
-import type { BudgetSummary } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
+import { useAppStore } from '@/lib/store'
 
 export function BudgetDashboard() {
-  const [budget, setBudget] = useState<BudgetSummary | null>(null)
-
-  const fetchBudget = useCallback(async () => {
-    try {
-      const res = await fetch('/api/autopilot?view=budgets')
-      if (res.ok) setBudget(await res.json())
-    } catch {}
-  }, [])
-
-  useEffect(() => {
-    fetchBudget()
-    const t = setInterval(fetchBudget, 15000)
-    return () => clearInterval(t)
-  }, [fetchBudget])
+  const { t } = useTranslation()
+  const budget = useAppStore(s => s.budgetSummary)
 
   if (!budget) {
     return (
       <div className="text-center text-muted-foreground text-xs py-6">
         <Wallet className="w-8 h-8 mx-auto mb-2 opacity-30" />
-        <p>Loading budget data...</p>
+        <p>{t('autopilot.budget.loading')}</p>
       </div>
     )
   }
@@ -36,7 +24,7 @@ export function BudgetDashboard() {
       {/* Company total */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-medium">Company Daily Budget</span>
+          <span className="font-medium">{t('autopilot.budget.companyDaily')}</span>
           <span className="text-muted-foreground">
             {formatTokens(budget.company.used)} / {formatTokens(budget.company.dailyLimit)}
           </span>
@@ -50,7 +38,7 @@ export function BudgetDashboard() {
         {companyRatio >= 0.8 && (
           <div className="flex items-center gap-1 text-[10px] text-yellow-400">
             <AlertTriangle className="w-3 h-3" />
-            {companyRatio >= 1 ? 'Budget exceeded!' : 'Approaching budget limit'}
+            {companyRatio >= 1 ? t('autopilot.budget.exceeded') : t('autopilot.budget.approaching')}
           </div>
         )}
       </div>
@@ -58,7 +46,7 @@ export function BudgetDashboard() {
       {/* Department breakdown */}
       {Object.keys(budget.departments).length > 0 && (
         <div className="space-y-2">
-          <span className="text-[10px] text-muted-foreground font-medium">Department Breakdown</span>
+          <span className="text-[10px] text-muted-foreground font-medium">{t('autopilot.budget.breakdown')}</span>
           {Object.entries(budget.departments).map(([deptId, dept]) => {
             const ratio = dept.ratio
             const barColor = ratio >= 1 ? 'bg-red-500' : ratio >= 0.8 ? 'bg-yellow-500' : 'bg-emerald-500'
@@ -67,7 +55,7 @@ export function BudgetDashboard() {
                 <div className="flex items-center justify-between text-[10px]">
                   <span>{deptId}</span>
                   <span className="text-muted-foreground">
-                    {formatTokens(dept.used)} / {dept.limit > 0 ? formatTokens(dept.limit) : 'unlimited'}
+                    {formatTokens(dept.used)} / {dept.limit > 0 ? formatTokens(dept.limit) : t('autopilot.budget.unlimited')}
                   </span>
                 </div>
                 {dept.limit > 0 && (
@@ -86,7 +74,7 @@ export function BudgetDashboard() {
 
       {Object.keys(budget.departments).length === 0 && (
         <div className="text-center text-[10px] text-muted-foreground py-3">
-          No department budgets configured.
+          {t('autopilot.budget.noDepts')}
         </div>
       )}
     </div>

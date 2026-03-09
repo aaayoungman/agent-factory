@@ -1,0 +1,19 @@
+{
+  "id": "anime",
+  "name": "动漫制作部",
+  "head": "anime-director",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "animation-supervisor",
+    "anime-director",
+    "script-adapter",
+    "sound-director",
+    "art-director",
+    "post-producer",
+    "storyboard-artist",
+    "anime-char-designer"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

@@ -1,0 +1,14 @@
+{
+  "id": "service",
+  "name": "客户服务部",
+  "head": "service-manager",
+  "interval": 600,
+  "enabled": false,
+  "agents": [
+    "service-manager",
+    "support-agent",
+    "csm"
+  ],
+  "budget": { "dailyTokenLimit": 500000, "alertThreshold": 0.8 },
+  "kpis": {}
+}

@@ -4,7 +4,7 @@
   "description": "首席运营官，负责业务流程优化、跨部门协调、运营策略制定、效率提升",
   "emoji": "🏗️",
   "category": "builtin",
-  "group": "ops",
+  "group": "executive",
   "defaults": {
     "model": "minimax-portal/MiniMax-M2.5",
     "skills": [
